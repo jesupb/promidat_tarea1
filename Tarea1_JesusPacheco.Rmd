@@ -1,0 +1,143 @@
+---
+title: "Tarea 1"
+author: "Jesus Pacheco"
+#date: "July 1, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+suppressMessages(suppressWarnings(library(plotrix)))
+suppressMessages(suppressWarnings(library(dplyr)))
+suppressMessages(suppressWarnings(library(ggmap)))
+suppressMessages(suppressWarnings(library(ggplot2)))
+```
+
+## I.1
+
+```{r echo = F}
+# funciones auxiliares ----------------------------------------------------
+# funcion para dibujar circulos
+draw.circle <- function(centre, radius, npoints = 100, ...) {
+  theta <- seq(0, 2*pi, length.out = npoints)
+  x <- radius * cos(theta) + centre[1]
+  y <- radius * sin(theta) + centre[2]
+  lines(x, y, ...)
+}
+```
+
+Primero se realiza la carga de los datos y se realiza el PCA sobre los mismos:
+
+```{r}
+# carga de los datos
+lenses <- read.csv("data/lenses.csv", head = F, 
+                col.names = c("id", "edad", "prescripcion", 
+                              "astigmatico", "tasa_lagrimas", "clase_lentes"))
+
+# proyeccion PCA
+modelo <- FactoMineR::PCA(dplyr::select(lenses, edad, 
+                                        prescripcion, astigmatico, 
+                                        tasa_lagrimas), 
+                          graph = FALSE)
+```
+
+La variable `modelo` permite utilizar el método `plot()` y luego dibujar los círculos:
+
+```{r}
+
+plot(modelo, ylim = c(-2, 2), xlim = c(-2, 2))
+draw.circle(c(-0.28, 1.39), 0.71, col = "red", lwd = 2)
+draw.circle(c(-1.31, -0.26), 0.67, col = "blue", lwd = 2)
+draw.circle(c(0.28, -1.39), 0.71, col = "chartreuse4", lwd = 2)
+draw.circle(c(1.31, 0.26), 0.67, col = "orange2", lwd = 2)
+```
+
+Se puede observar que los individuos quedan agrupados de la siguiente manera en el primer plano principal:
+
+- **Grupo 1**: 2, 6, 10, 14, 18, 22
+- **Grupo 2**: 1, 5, 9, 13, 17, 21
+- **Grupo 3**: 3, 7, 11, 15, 19, 23
+- **Grupo 4**: 4, 8, 12, 16, 20 ,24
+
+## I.2
+
+A partir del inciso anterior, se identifica al Grupo 3 como el más cercano al cuadrante inferior derecho. A continuación se explora la distribución de las variables `edad`, `prescripcion`, `astigmatico` y `tasa_lagrimas` para ese grupo de individuos:
+
+```{r}
+lenses2 <- lenses[c(3, 7, 11, 15, 19, 23), ]
+lenses2 <- sapply(lenses2, function(x) {y <- as.factor(x); y})
+par(mfrow = c(2,2))
+
+barplot(table(lenses2[, "edad"]), col = "blue", 
+     main = "a", xlab = "Edad")
+barplot(table(lenses2[, "prescripcion"]), col = "blue", 
+     main = "b", xlab = "Prescripcion")
+barplot(table(lenses2[, "astigmatico"]), col = "blue", 
+     main = "c", xlab = "Astigmatico")
+barplot(table(lenses2[, "tasa_lagrimas"]), col = "blue", 
+     main = "d", xlab = "Tasa Lagrimas")
+```
+
+Se nota que el grupo es homogéneo en las variables `astigmatico` y `tasa_lagrimas`, mientras que en las variables `edad` y `prescripcion` hay mayor variabilidad.
+
+## I.3
+
+Ahora se estudia la variable `clase` mediante un grafico de barras:
+
+```{r}
+barplot(table(lenses[, "clase_lentes"]),
+        border = F,
+        col = c("gray", "gray", "blue"),
+        main = "Distribución de Clase de lentes")
+legend(0.2, 15, legend = c("menos obs.", "más obs."), fill = c("gray", "blue"))
+```
+
+Se puede observar que en la mayoría de los casos se decide que no se necesitan lentes (15 individuos).
+
+# I.4
+
+```{r}
+sp3d <- scatterplot3d::scatterplot3d(x=modelo$ind$coord[,1],
+                                     y=modelo$ind$coord[,3],
+                                     z=modelo$ind$coord[,2],
+                                     highlight.3d = TRUE,
+                                     type = "h",
+                                     pch=19,
+                                     main="Plano Prinicpal", 
+                                     xlab=(paste0("PC1 (", modelo$eig[1,2], "%)")), 
+                                     ylab=(paste0("PC3 (", modelo$eig[3,2], "%)")), 
+                                     zlab=(paste0("PC2 (", modelo$eig[2,2], "%)")))
+
+sp3d.coords <- sp3d$xyz.convert(x=modelo$ind$coord[,1], 
+                                y=modelo$ind$coord[,3],
+                                z=modelo$ind$coord[,2])
+
+text(sp3d.coords$x, sp3d.coords$y,
+         labels=row.names(lenses),
+         cex=.5, pos=4)
+
+draw.ellipse(x=3, y= -1.5, a=0.5, b=2.5, border="red", angle=130)
+
+```
+
+## III.1
+
+```{r results='hide'}
+# filtrado de datos
+crime2 <- crime %>% filter(offense == "murder")
+
+# recuperacion de datos
+houston_map <- suppressMessages(get_map(
+  location = c(lon = mean(crime2$lon),lat = mean(crime2$lat))
+  ,zoom = 11
+  ,source = "google"))
+```
+
+
+```{r}
+suppressWarnings(ggmap(houston_map, extent = "device") + 
+  geom_point(data = crime2,
+             aes(x = lon, y=lat, color=day, size=hour), 
+             alpha = 0.5))
+```
+
