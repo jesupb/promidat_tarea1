@@ -69,13 +69,13 @@ lenses2 <- sapply(lenses2, function(x) {y <- as.factor(x); y})
 par(mfrow = c(2,2))
 
 barplot(table(lenses2[, "edad"]), col = "blue", 
-     main = "a", xlab = "Edad")
+     main = "Edad", xlab = "")
 barplot(table(lenses2[, "prescripcion"]), col = "blue", 
-     main = "b", xlab = "Prescripcion")
+     main = "Prescripcion", xlab = "")
 barplot(table(lenses2[, "astigmatico"]), col = "blue", 
-     main = "c", xlab = "Astigmatico")
+     main = "Astigmatico", xlab = "")
 barplot(table(lenses2[, "tasa_lagrimas"]), col = "blue", 
-     main = "d", xlab = "Tasa Lagrimas")
+     main = "Tasa Lagrimas", xlab = "")
 ```
 
 Se nota que el grupo es homogéneo en las variables `astigmatico` y `tasa_lagrimas`, mientras que en las variables `edad` y `prescripcion` hay mayor variabilidad.
@@ -95,6 +95,8 @@ legend(0.2, 15, legend = c("menos obs.", "más obs."), fill = c("gray", "blue"))
 Se puede observar que en la mayoría de los casos se decide que no se necesitan lentes (15 individuos).
 
 # I.4
+
+Ahora se grafican los primeros tres ejes principales:
 
 ```{r}
 sp3d <- scatterplot3d::scatterplot3d(x=modelo$ind$coord[,1],
@@ -120,7 +122,20 @@ draw.ellipse(x=3, y= -1.5, a=0.5, b=2.5, border="red", angle=130)
 
 ```
 
-## III.1
+Note que la representación aumenta en un 25%, por lo que los tres primeros ejes representan en conjunto un 75% de inercia.
+
+## I.5
+
+Respecto a los individuos 3 y 19 se puede apreciar que tienen la misma proyección en los primeros dos ejes principales, pero se nota que en el tercer eje principal se distancian. Al observar los valores de ambos individuos se ve una coincidencia exacta en todas las variables, salvo en la variable `edad`, por lo que se concluye que el tercer eje principal está capturanto la contribución a la inercia de esa variable.
+
+```{r, results='asis', echo = FALSE}
+pander::pandoc.table(lenses[c(3,19),-1])
+```
+
+
+## III
+
+Se crea el dataset de datos filtrados y se cargan los datos de Google para dibujar el mapa:
 
 ```{r results='hide'}
 # filtrado de datos
@@ -141,3 +156,4 @@ suppressWarnings(ggmap(houston_map, extent = "device") +
              alpha = 0.5))
 ```
 
+Se puede observar que hay círculos predominantemente grandes, lo que indica altos índices de asesinatos en horas de la tarde y noche (después de las 15hrs). A simple vista no hay un día de la semana que domine a los demás en cantidad. Geográficamente las observaciones se notan más concentradas en la región sur del mapa, a excepción de Bellaire.
